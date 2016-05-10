@@ -1,5 +1,7 @@
 from openalpr import Alpr
 from argparse import ArgumentParser
+import cv2
+
 def process(data):
     plate = ""
     confidence = ""
@@ -8,7 +10,7 @@ def process(data):
     parser.add_argument("-c", "--country", dest="country", action="store", default="us",
                       help="License plate Country" )
 
-    OpenALPR_path = "C:/Users/Franco/Documents/Github/control-vehicular/openalpr_32bit/"
+    OpenALPR_path = "C:/Users/Franco/Documents/Github/control-vehicular-cv/openalpr_32bit/"
 
     parser.add_argument("--config", dest="config", action="store", default=OpenALPR_path+"openalpr.conf",
                       help="Path to openalpr.conf config file" )
@@ -20,7 +22,7 @@ def process(data):
 
     options = parser.parse_args()
 
-    print(options.country, options.config, options.runtime_data)
+    # print(options.country, options.config, options.runtime_data)
 
     alpr = None
     try:
@@ -29,7 +31,7 @@ def process(data):
         if not alpr.is_loaded():
             print("Error loading OpenALPR")
         else:
-            print("Using OpenALPR " + alpr.get_version().decode('ascii'))
+            # print("Using OpenALPR " + alpr.get_version().decode('ascii'))
 
             alpr.set_top_n(7)
             alpr.set_default_region(b"wa")
@@ -43,8 +45,8 @@ def process(data):
             # import pprint
             # pprint.pprint(results)
 
-            print("Image size: %dx%d" %(results['img_width'], results['img_height']))
-            print("Processing Time: %f" % results['processing_time_ms'])
+            # print("Image size: %dx%d" %(results['img_width'], results['img_height']))
+            print("OpenALPR " + alpr.get_version().decode('ascii') + " (" + options.country + ") " + "pt: %.2f" % results['processing_time_ms'])
 
             i = 0 
             if results['results']:
@@ -57,3 +59,12 @@ def process(data):
             alpr.unload()
 
     return plate, confidence
+
+def plate_detect(image, thread_id):
+    ret, enc = cv2.imencode("*.bmp", image)
+    from multiprocessing.pool import ThreadPool
+    pool = ThreadPool(processes = thread_id)
+    async_result = pool.apply_async(process, (enc,)) # tuple of args for foo
+    # do some other stuff in the main process
+    return async_result.get()
+    # get the return value from your function.
