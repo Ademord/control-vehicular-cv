@@ -37,7 +37,7 @@ class Detector(threading.Thread):
 				# cv2.imshow(window_name, image)
 				plate, precision = reconocedor.plate_detect(image, self.thread_id)
 				miembro = adaptadorBDMiembro.findMiembroByPlate(plate)
-				print("(" + plate + ", " + precision + ", " + miembro + ")")
+				print("(" + plate + ", " + str(precision) + ", " + miembro + ")")
 				# compare plate against template
 				if plate:
 					adaptadorBDRegistro.save(self.cam.ip, adaptadorBDLugar.find(self.cam.lugar_id), plate, miembro, image)
