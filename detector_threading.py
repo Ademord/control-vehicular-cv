@@ -2,11 +2,7 @@ import cv2
 import camara
 import reconocedor
 import threading
-import adaptadorBDMiembro
-import adaptadorBDRegistro
-import adaptadorBDLugar
-
-
+import time
 
 #cascPath = "haarcascade_frontalface_alt.xml"
 cascPath = "haarcascade_russian_plate_number.xml"
@@ -15,8 +11,8 @@ faceCascade = cv2.CascadeClassifier(cascPath)
 class Detector(threading.Thread):
 	def __init__(self, thread_id, name, cam):
 		threading.Thread.__init__(self)
-		self.name = name
 		self.thread_id = thread_id
+		self.name = name
 		self.cam =  camara.Camara() 
 		# verificar si asi se desempaqueta un diccionario
 		# self.cam =  Camara(**cam) 
@@ -29,18 +25,16 @@ class Detector(threading.Thread):
 		cv2.namedWindow(window_name)
 		count = 0
 		while True:
-			if count%30 == 0:
-				got_a_frame, image = self.cam.read()
-				if not got_a_frame:  # error on video source or last frame finished
-					print("Error getting the frame")
-					break
-				# cv2.imshow(window_name, image)
-				plate, precision = reconocedor.plate_detect(image, self.thread_id)
-				miembro = adaptadorBDMiembro.findMiembroByPlate(plate)
-				print("(" + plate + ", " + str(precision) + ", " + miembro + ")")
-				# compare plate against template
-				if plate:
-					adaptadorBDRegistro.save(self.cam.ip, adaptadorBDLugar.find(self.cam.lugar_id), plate, miembro, image)
+			time.sleep(2)
+			got_a_frame, image = self.cam.read()
+			if not got_a_frame:  # error on video source or last frame finished
+				print("Error getting the frame")
+				break
+			# cv2.imshow(window_name, image)
+			current = reconocedor.recognize(image, self.cam)
+			# current.daemon = True
+			current.start()
+
 			if cv2.waitKey(1) & 0xFF == ord('q'):
 				break
 			count+=1
