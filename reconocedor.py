@@ -5,6 +5,7 @@ import threading
 import adaptadorBDLugar
 import adaptadorBDMiembro
 import adaptadorBDRegistro
+import re
 
 class recognize(threading.Thread):
     def __init__(self, image, cam):
@@ -75,10 +76,14 @@ class recognize(threading.Thread):
         print("Entering sub-thread")
         ret, enc = cv2.imencode("*.bmp", self.image)
         self.plate, self.precision = self.process(enc)
-        self.miembro = adaptadorBDMiembro.findMiembroByPlate(self.plate)
         print("(" + self.plate + ", " + str(self.precision) + ", " + self.miembro + ")")
         if self.plate:
-            adaptadorBDRegistro.save(self.cam.ip, adaptadorBDLugar.find(self.cam.lugar_id), self.plate, self.miembro, self.image)
+            self.miembro = adaptadorBDMiembro.findMiembroByPlate(self.plate)
+            license_plate = re.compile(r"^\d{1,4}[A-Z]{3}$",re.I)
+            ml = True
+            if license_plate.search(self.plate): ml = False
+            print(ml)
+            adaptadorBDRegistro.save(self.cam.ip, adaptadorBDLugar.find(self.cam.lugar_id), self.plate, self.miembro, self.image, ml)
 
         # compare plate against template
         print("Exiting sub-thread")
